@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
@@ -15,7 +16,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        Customer::create([
             'name' => 'Admin',
             'username' => 'admin',
             'email' => 'admin@ifump.net',

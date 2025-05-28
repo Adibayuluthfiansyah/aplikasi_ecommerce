@@ -1,8 +1,10 @@
 <?php
+// File: app/Http/Controllers/CustomerController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -11,9 +13,8 @@ class CustomerController extends Controller
 {
     public function index(): JsonResponse
     {
-
-        $dataUCustomer = Customer::all();
-        return response()->json($dataUCustomer, 200);
+        $dataCustomer = Customer::all();
+        return response()->json($dataCustomer, 200);
     }
 
     public function show($id): JsonResponse
@@ -26,66 +27,71 @@ class CustomerController extends Controller
         }
     }
 
-    // Menambahkan user baru
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'alamat' => 'required|string|max:255',
-            'no_hp' => 'required|max:15|min:8|unique:customer,no_hp',
+            'name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:customer,email',
+            'password' => 'required|string|min:6|max:50',
+            'phone' => 'required|string|max:15',
+            'address' => 'required|string',
         ]);
 
         $customer = Customer::create([
-            'customer_name' => $request->customer_name,
-            'alamat' => $request->alamat,
-            'no_hp' => $request->no_hp,
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'phone' => $request->phone,
+            'address' => $request->address,
         ]);
 
-
         return response()->json([
-            'message' => 'Akun customer berhasil ditambahkan.',
+            'message' => 'Customer berhasil ditambahkan.',
             'data' => $customer
         ], 201);
     }
 
-      // Mengupdate data user
-      public function update(Request $request, $id): JsonResponse
-      {
-          try {
-              $customer = Customer::findOrFail($id);
-  
-              $request->validate([
-                'customer_name' => 'sometimes|string|max:255',
-                'alamat' => 'sometimes|string|max:255',
-                'no_hp' => 'sometimes|max:15|min:8|unique:customer,no_hp',
-            ]);
-  
-              // Hanya update field yang dikirim
-              $data = $request->only(['customer_name', 'alamat', 'no_hp']);
+    public function update(Request $request, $id): JsonResponse
+    {
+        try {
+            $customer = Customer::findOrFail($id);
 
-              $customer->update($data);
-              
-  
-              return response()->json([
-                  'message' => $customer->wasChanged()
-                      ? 'Akun customer berhasil diupdate.'
-                      : 'Tidak ada perubahan pada data customer.',
-                  'data' => $customer
-              ], 200);
-          } catch (ModelNotFoundException $e) {
-              return response()->json(['message' => 'Akun tidak ditemukan'], 404);
-          }
-      }
-  
-      public function destroy($id): JsonResponse
-      {
-          try {
-              $customer = Customer::findOrFail($id);
-              $customer->delete();
-  
-              return response()->json(['message' => 'Customer berhasil dihapus.']);
-          } catch (ModelNotFoundException $e) {
-              return response()->json(['message' => 'Customer tidak ditemukan.'], 404);
-          }
-      }
+            $request->validate([
+                'name' => 'sometimes|string|max:50',
+                'email' => 'sometimes|email|max:50|unique:customer,email,' . $id,
+                'password' => 'sometimes|string|min:6|max:50',
+                'phone' => 'sometimes|string|max:15',
+                'address' => 'sometimes|string',
+            ]);
+
+            $data = $request->only(['name', 'email', 'phone', 'address']);
+
+            if ($request->has('password')) {
+                $data['password'] = bcrypt($request->password);
+            }
+
+            $customer->update($data);
+
+            return response()->json([
+                'message' => $customer->wasChanged()
+                    ? 'Customer berhasil diupdate.'
+                    : 'Tidak ada perubahan pada data customer.',
+                'data' => $customer
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Customer tidak ditemukan'], 404);
+        }
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        try {
+            $customer = Customer::findOrFail($id);
+            $customer->delete();
+
+            return response()->json(['message' => 'Customer berhasil dihapus.']);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Customer tidak ditemukan.'], 404);
+        }
+    }
 }
