@@ -11,7 +11,7 @@ class Customer extends Model
 {
     use HasUlids;
 
-    protected $table = 'customer';
+    protected $table = 'customers'; // Changed to plural
 
     protected $fillable = [
         'name',

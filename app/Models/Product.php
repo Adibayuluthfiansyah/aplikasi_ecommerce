@@ -11,7 +11,7 @@ class Product extends Model
 {
     use HasUlids;
 
-    protected $table = 'product';
+    protected $table = 'products'; // Changed to plural
 
     protected $fillable = [
         'name',

@@ -33,7 +33,7 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|integer|min:0',
             'stock' => 'required|integer|min:0',
-            'category_id' => 'required|exists:category,id',
+            'category_id' => 'required|exists:categories,id', // Fixed table name
         ]);
 
         $product = Product::create([
@@ -60,7 +60,7 @@ class ProductController extends Controller
                 'description' => 'sometimes|string',
                 'price' => 'sometimes|integer|min:0',
                 'stock' => 'sometimes|integer|min:0',
-                'category_id' => 'sometimes|exists:category,id',
+                'category_id' => 'sometimes|exists:categories,id', // Fixed table name
             ]);
 
             $data = $request->only(['name', 'description', 'price', 'stock', 'category_id']);

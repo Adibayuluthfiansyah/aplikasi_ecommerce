@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-
 class OrderController extends Controller
 {
     public function index(): JsonResponse
@@ -30,7 +29,7 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'customer_id' => 'required|exists:customer,id',
+            'customer_id' => 'required|exists:customers,id', // Fixed table name
             'order_date' => 'required|date',
             'total_amount' => 'required|integer|min:0',
             'status' => 'sometimes|string|in:pending,processing,completed,cancelled',
@@ -55,7 +54,7 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
 
             $request->validate([
-                'customer_id' => 'sometimes|exists:customer,id',
+                'customer_id' => 'sometimes|exists:customers,id', // Fixed table name
                 'order_date' => 'sometimes|date',
                 'total_amount' => 'sometimes|integer|min:0',
                 'status' => 'sometimes|string|in:pending,processing,completed,cancelled',

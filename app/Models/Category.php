@@ -1,4 +1,5 @@
 <?php
+// App/Models/Category.php
 
 namespace App\Models;
 
@@ -10,7 +11,8 @@ class Category extends Model
 {
     use HasUlids;
 
-    protected $table = 'category';
+    // Ubah dari 'category' ke 'categories'
+    protected $table = 'categories';
 
     protected $fillable = [
         'name',
