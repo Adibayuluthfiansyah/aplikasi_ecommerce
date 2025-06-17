@@ -6,13 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-
     public function up(): void
     {
-        Schema::create('order_item', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) { // UBAH: order_item -> order_items
             $table->ulid('id')->primary();
-            $table->foreignUlid('order_id')->constrained('order')->cascadeOnDelete();
-            $table->foreignUlid('product_id')->constrained('product')->cascadeOnDelete();
+            $table->foreignUlid('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignUlid('product_id')->constrained('products')->cascadeOnDelete();
             $table->integer('quantity');
             $table->integer('price');
             $table->timestamps();
@@ -21,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('order_item');
+        Schema::dropIfExists('order_items');
     }
 };
