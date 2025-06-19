@@ -7,58 +7,52 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use Inertia\Inertia;
+use App\Models\User;
 
 class AuthController extends Controller
 {
     /**
-     * Show login form
-     */
-    public function showLogin()
-    {
-        return Inertia::render('Auth/Login');
-    }
-
-    /**
-     * Handle login request
+     * Handle API login request
      */
     public function login(Request $request)
     {
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
+            // HAPUS "0" yang menyebabkan error
         ]);
 
         // Coba login dengan username atau email
         $fieldType = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        $credentials = [
-            $fieldType => $request->username,
-            'password' => $request->password
-        ];
+        $user = User::where($fieldType, $request->username)->first();
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
-            return redirect()->intended(route('dashboard'));
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Username atau password salah'
+            ], 401);
         }
 
-        throw ValidationException::withMessages([
-            'username' => __('The provided credentials are incorrect.'),
+        // Buat token menggunakan Sanctum
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login berhasil',
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+            ]
         ]);
     }
 
     /**
-     * Show register form
-     */
-    public function showRegister()
-    {
-        return Inertia::render('Auth/Register');
-    }
-
-    /**
-     * Handle register request
+     * Handle API register request
      */
     public function register(Request $request)
     {
@@ -76,44 +70,96 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        Auth::login($user);
+        $token = $user->createToken('api-token')->plainTextToken;
 
-        return redirect(route('dashboard'));
+        return response()->json([
+            'success' => true,
+            'message' => 'Registrasi berhasil',
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+            ]
+        ]);
     }
 
     /**
-     * Handle logout request
+     * Handle API logout request
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Hapus token yang sedang digunakan
+        $request->user()->currentAccessToken()->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/');
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout berhasil'
+        ]);
     }
 
     /**
-     * Show forgot password form
+     * Get authenticated user
      */
-    public function showForgotPassword()
+    public function user(Request $request)
     {
-        return Inertia::render('Auth/ForgotPassword');
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+                'username' => $request->user()->username,
+            ]
+        ]);
+    }
+
+    // === WEB ROUTES (untuk Inertia) ===
+
+    /**
+     * Show login form
+     */
+    public function showLogin()
+    {
+        return Inertia::render('Auth/Login');
     }
 
     /**
-     * Handle forgot password request
+     * Handle web login request
      */
-    public function forgotPassword(Request $request)
+    public function webLogin(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email'
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        // Logic untuk send reset password email
-        // Implementasi sesuai kebutuhan
+        $fieldType = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        return back()->with('status', 'Password reset link sent!');
+        $credentials = [
+            $fieldType => $request->username,
+            'password' => $request->password
+        ];
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('dashboard'));
+        }
+
+        throw ValidationException::withMessages([
+            'username' => __('The provided credentials are incorrect.'),
+        ]);
+    }
+
+    /**
+     * Handle web logout request
+     */
+    public function webLogout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
     }
 }
